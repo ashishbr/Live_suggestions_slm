@@ -117,10 +117,8 @@ export function SettingsModal({ settings, onSave, onClose, apiKey, onSaveApiKey 
 
 function Section({ label, children }) {
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>
-        {label}
-      </div>
+    <div className={styles.section}>
+      <div className={styles.sectionLabel}>{label}</div>
       {children}
     </div>
   )
@@ -129,7 +127,7 @@ function Section({ label, children }) {
 function PromptField({ label, value, onChange, onReset }) {
   return (
     <Section label={label}>
-      <div style={{ position: 'relative' }}>
+      <div className={styles.promptFieldWrapper}>
         <textarea
           className={styles.textarea}
           value={value}

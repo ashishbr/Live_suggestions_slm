@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Send, StopCircle, Trash2, Bot, User } from 'lucide-react'
+import { ErrorBanner, EmptyState } from './PanelPrimitives'
 import styles from './ChatPanel.module.css'
 
 export function ChatPanel({
@@ -14,7 +15,6 @@ export function ChatPanel({
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
-  // Auto-scroll on new messages / streaming tokens
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -47,23 +47,24 @@ export function ChatPanel({
         )}
       </div>
 
-      {error && (
-        <div className={styles.errorBanner}>{error}</div>
-      )}
+      <ErrorBanner error={error} />
 
       <div className={styles.messages}>
         {isEmpty ? (
-          <div className={styles.emptyState}>
-            <Bot size={32} className={styles.emptyIcon} />
-            <p>Click a suggestion or ask anything</p>
-            <p className={styles.emptyHint}>
-              Full transcript context is passed with every message.
-            </p>
-          </div>
+          <EmptyState
+            icon={Bot}
+            title="Click a suggestion or ask anything"
+            hint="Full transcript context is passed with every message."
+          />
         ) : (
           <>
             {messages.map((msg, i) => (
-              <MessageBubble key={i} msg={msg} isLast={i === messages.length - 1} isStreaming={isStreaming} />
+              <MessageBubble
+                key={msg.id}
+                msg={msg}
+                isLast={i === messages.length - 1}
+                isStreaming={isStreaming}
+              />
             ))}
             <div ref={bottomRef} />
           </>
@@ -126,7 +127,6 @@ function MessageBubble({ msg, isLast, isStreaming }) {
   )
 }
 
-/** Very lightweight markdown-ish rendering for bold + line breaks */
 function renderText(text) {
   if (!text) return null
   return text.split('\n').map((line, i) => (

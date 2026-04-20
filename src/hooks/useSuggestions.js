@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { complete } from '../lib/groq'
+import { complete, MODELS } from '../lib/groq'
 import {
   DEFAULT_SETTINGS,
   getContextWindow,
@@ -19,6 +19,7 @@ export function useSuggestions(transcriptLines, isRecording, apiKey, settings) {
   const prevTranscriptRef           = useRef('')
   const timerRef                    = useRef(null)
   const lastBatchPreviewsRef        = useRef([])      // to avoid repeats
+  const generateBatchRef            = useRef(null)
 
   const fullTranscript = transcriptLines.join('\n')
 
@@ -49,7 +50,7 @@ export function useSuggestions(transcriptLines, isRecording, apiKey, settings) {
           { role: 'user', content: userMsg },
         ],
         apiKey,
-        { temperature: 0.7, maxTokens: 600 }
+        { temperature: 0.7, maxTokens: 250, model: MODELS.suggestions }
       )
 
       const items = parseSuggestions(raw)
@@ -76,6 +77,9 @@ export function useSuggestions(transcriptLines, isRecording, apiKey, settings) {
     }
   }, [apiKey, fullTranscript, batches.length, settings])
 
+  // Keep ref in sync so effects always call the latest version
+  generateBatchRef.current = generateBatch
+
   // ── Auto-refresh timer ───────────────────────────────────────────────────
   useEffect(() => {
     if (!isRecording) {
@@ -93,15 +97,14 @@ export function useSuggestions(transcriptLines, isRecording, apiKey, settings) {
   useEffect(() => {
     if (!apiKey || !fullTranscript.trim()) return
     if (fullTranscript !== prevTranscriptRef.current) {
-      generateBatch()
+      generateBatchRef.current()
     }
-  }, [fullTranscript]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fullTranscript, apiKey])
 
   return {
     batches,
     isLoading,
     error,
     refresh: generateBatch,
-    clearError: () => setError(null),
   }
 }

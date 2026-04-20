@@ -3,6 +3,7 @@ const GROQ_BASE = 'https://api.groq.com/openai/v1'
 export const MODELS = {
   transcription: 'whisper-large-v3',
   chat: 'llama-3.3-70b-versatile',
+  suggestions: 'llama-3.1-8b-instant',
 }
 
 /**
@@ -99,7 +100,7 @@ export async function complete(messages, apiKey, opts = {}) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: MODELS.chat,
+      model: opts.model ?? MODELS.chat,
       messages,
       stream: false,
       temperature: opts.temperature ?? 0.7,

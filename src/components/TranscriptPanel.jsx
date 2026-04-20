@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Mic, MicOff, Loader } from 'lucide-react'
+import { ErrorBanner, EmptyState } from './PanelPrimitives'
 import styles from './TranscriptPanel.module.css'
 
 export function TranscriptPanel({
@@ -12,7 +13,6 @@ export function TranscriptPanel({
 }) {
   const bottomRef = useRef(null)
 
-  // Auto-scroll to latest line
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [transcriptLines])
@@ -52,20 +52,15 @@ export function TranscriptPanel({
         </button>
       </div>
 
-      {error && (
-        <div className={styles.errorBanner}>{error}</div>
-      )}
+      <ErrorBanner error={error} />
 
       <div className={styles.body}>
         {isEmpty ? (
-          <div className={styles.emptyState}>
-            <Mic size={32} className={styles.emptyIcon} />
-            <p>Press <strong>Record</strong> to start capturing</p>
-            <p className={styles.emptyHint}>
-              Transcript chunks appear every ~30 seconds.
-              Suggestions update automatically.
-            </p>
-          </div>
+          <EmptyState
+            icon={Mic}
+            title={<>Press <strong>Record</strong> to start capturing</>}
+            hint="Transcript chunks appear every ~30 seconds. Suggestions update automatically."
+          />
         ) : (
           <div className={styles.lines}>
             {transcriptLines.map((line, i) => (

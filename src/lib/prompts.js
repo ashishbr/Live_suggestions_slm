@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS = {
   chatContextWords: 2000,
 
   // ── Refresh interval (ms) ─────────────────────────────────────────────────
-  refreshIntervalMs: 30000,
+  refreshIntervalMs: 15000,
 
   // ── Prompts ───────────────────────────────────────────────────────────────
 

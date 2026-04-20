@@ -1,8 +1,6 @@
 # TwinMind — Live Suggestions
 
-A real-time meeting copilot that transcribes your microphone, surfaces three context-aware suggestions every 30 seconds, and lets you explore any suggestion in a detailed chat panel.
-
-**Live demo:** _[paste your Vercel URL here after deploying]_
+A real-time meeting copilot that transcribes your microphone, surfaces three context-aware suggestions every 15 seconds, and lets you explore any suggestion in a detailed chat panel.
 
 ---
 
@@ -12,7 +10,8 @@ A real-time meeting copilot that transcribes your microphone, surfaces three con
 |---|---|---|
 | Frontend | React 18 + Vite | Fast HMR, CSS Modules for scoped styles, no unnecessary complexity |
 | Transcription | Groq Whisper Large V3 | Fastest available Whisper endpoint; < 1s for a 30s chunk |
-| LLM | `meta-llama/llama-4-maverick-17b-128e-instruct` (GPT-OSS 120B on Groq) | As specified; Groq's inference is ≈10× faster than OpenAI for same model class |
+| LLM (chat / detail) | `llama-3.3-70b-versatile` on Groq | High-quality responses for chat and expanded suggestion answers |
+| LLM (suggestions) | `llama-3.1-8b-instant` on Groq | Fastest Groq model; low latency for the frequent 15s suggestion cycle |
 | Deployment | Vercel | Zero-config, instant deploys from GitHub |
 | Storage | `localStorage` only | API key + settings only. No backend, no database needed |
 
@@ -55,8 +54,9 @@ src/
 ├── components/
 │   ├── ApiKeyGate.*          # First-run key entry screen
 │   ├── TranscriptPanel.*     # Left column: mic + transcript
-│   ├── SuggestionsPanel.*    # Middle column: batched suggestion cards
+│   ├── SuggestionsPanel.*    # Middle column: suggestion cards with pagination
 │   ├── ChatPanel.*           # Right column: streaming chat
+│   ├── PanelPrimitives.*     # Shared ErrorBanner + EmptyState components
 │   └── SettingsModal.*       # Full prompt + context-window editor
 └── App.jsx                   # Layout, wires all hooks together
 ```
@@ -67,9 +67,7 @@ src/
 
 ### Suggestion generation
 
-**Context window:** Last ~600 words of transcript (configurable). This keeps latency low (~0.8s on Groq) while covering enough recent context to be useful.
-
-**Why 600 words?** A typical speaker produces 130–150 words per minute. 600 words ≈ the last 4 minutes — long enough to track the thread of a conversation, short enough that the model can focus without getting confused by distant context.
+**Context window:** Only the most recently transcribed chunk (one ~30s audio segment). This makes suggestions laser-focused on what was just said, avoiding irrelevant suggestions based on earlier parts of the conversation.
 
 **Suggestion types** the model can choose from:
 - `question` — a sharp follow-up the listener should ask
@@ -102,7 +100,7 @@ Full rolling transcript (last ~2000 words) is included in the system prompt. Res
 
 **30s MediaRecorder chunks.** We collect audio with `ondataavailable` every 1 second but only flush to Whisper every 30 seconds (configurable). Shorter chunks produce worse transcription because Whisper performs poorly on very short audio — it has no sentence context. 30s is the sweet spot for quality vs. latency.
 
-**Suggestion batches stay visible.** Older batches scroll down rather than disappearing. This lets you revisit earlier suggestions that you might have missed. New batches animate in at the top.
+**Suggestion pagination.** Only one batch is shown at a time. Use the ‹ › arrows in the header to navigate between batches, with a counter showing position (e.g. 2/4). New batches auto-jump the view to the latest. This keeps the panel clean while still letting you revisit earlier suggestions.
 
 **Manual flush before refresh.** When the user hits the refresh button, we first flush any buffered audio to Whisper, then generate suggestions against the now-current transcript. This avoids stale suggestions when manually refreshing mid-conversation.
 
@@ -117,7 +115,7 @@ Full rolling transcript (last ~2000 words) is included in the system prompt. Res
 | Suggestions context | 600 words | Transcript words passed to suggestion LLM |
 | Detail context | 1200 words | Transcript words passed on suggestion click |
 | Chat context | 2000 words | Transcript words in chat system prompt |
-| Auto-refresh interval | 30000 ms | How often suggestions auto-refresh |
+| Auto-refresh interval | 15000 ms | How often suggestions auto-refresh |
 | Suggestions system prompt | (see prompts.js) | Full prompt controlling suggestion quality |
 | Detail system prompt | (see prompts.js) | Prompt for expanded click-through answers |
 | Chat system prompt | (see prompts.js) | Prompt for the chat panel |

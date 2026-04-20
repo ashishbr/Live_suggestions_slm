@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { RefreshCw, Loader, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import { SUGGESTION_TYPE_META } from '../lib/prompts'
+import { ErrorBanner, EmptyState } from './PanelPrimitives'
 import styles from './SuggestionsPanel.module.css'
 
 export function SuggestionsPanel({
@@ -69,19 +70,15 @@ export function SuggestionsPanel({
         </div>
       </div>
 
-      {error && (
-        <div className={styles.errorBanner}>{error}</div>
-      )}
+      <ErrorBanner error={error} />
 
       <div className={styles.body}>
         {isEmpty && !isLoading ? (
-          <div className={styles.emptyState}>
-            <Sparkles size={32} className={styles.emptyIcon} />
-            <p>Suggestions appear once the conversation begins</p>
-            <p className={styles.emptyHint}>
-              They refresh automatically every 30 seconds.
-            </p>
-          </div>
+          <EmptyState
+            icon={Sparkles}
+            title="Suggestions appear once the conversation begins"
+            hint="They refresh automatically every 15 seconds."
+          />
         ) : (
           <div className={styles.batches}>
             {isLoading && batches.length === 0 && (
